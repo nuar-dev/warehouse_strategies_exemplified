@@ -1,0 +1,529 @@
+/* === Layout Grundstruktur === */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: sans-serif;
+  background: #f5f5f5;
+  overflow: hidden;
+}
+
+.title {
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+/* Gesamte Simulation nutzt Viewport */
+#main {
+  display: flex;
+  height: calc(100% - 60px);
+  position: relative;
+}
+
+/* === Controls === */
+#controls {
+  flex: 0 0 300px;
+  background: #fff;
+  border-right: 1px solid #ccc;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow: auto;
+}
+#grid-wrapper {
+  position: relative;
+}
+
+#controls button {
+  width: 100%;
+  padding: 0.6rem;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+#controls label {
+  font-size: 0.9rem;
+  display: block;
+  margin-top: 0.5rem;
+}
+
+#controls input[type="range"] {
+  width: 100%;
+}
+
+#tick-display {
+  text-align: right;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.zone-control {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #ddd;
+}
+
+.zone-control h4 {
+  margin: 0 0 0.3rem;
+}
+
+/* === Grid === */
+#grid-container {
+  width: 65%;
+  height: 95%;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0rem;
+  margin-left: 2rem;
+}
+
+
+#grid-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#grid-layout {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+
+#grid {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+
+/* === Zellen === */
+.cell {
+  position: relative;
+  border: 1px solid #555;
+  box-sizing: border-box;
+}
+
+.road {
+  background: #DDD;
+}
+
+.zone-fixed {
+  background: #ffe;
+}
+
+.zone-chaos {
+  background: #eef;
+}
+
+.zone-hybrid {
+  background: #efe;
+}
+
+/* === Einheiten (Workers, Picker, Surveyor) === */
+#workers,
+#pickers,
+#surveyors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.worker,
+.picker,
+.surveyor {
+  position: absolute;
+  width: calc(100% / 10);
+  height: calc(100% / 10);
+  border-radius: 50%;
+  transition: top 0.1s linear, left 0.1s linear;
+  z-index: 5;
+}
+
+.worker.fixed {
+  background: #D32F2F;
+}
+
+.worker.chaos {
+  background: #1976D2;
+}
+
+.worker.hybrid {
+  background: #388E3C;
+}
+
+.picker {
+  background: #000;
+  z-index: 10;
+}
+
+.surveyor {
+  background: cyan;
+}
+
+.worker.hidden,
+.picker.hidden,
+.surveyor.hidden {
+  display: none !important;
+}
+
+/* === Labels neben dem Grid === */
+#labels {
+  position: absolute;
+  top: 0;
+  right: -104px;
+  display: flex;
+  flex-direction: column;
+  width: 100px;
+  height: 100%;
+}
+
+.label-cell {
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  width: 100px;
+  height: calc(100% / 10);
+  background: #fff;
+  border-left: 1px solid #aaa;
+  font-weight: bold;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+/* Sidebar positioning */
+#sidebar-wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  z-index: 20;
+}
+
+/* Sidebar panel */
+#sidebar {
+  position: relative;
+  width: 300px;
+  height: 100%;
+  background: white;
+  border-left: 1px solid #ccc;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+
+/* When collapsed, slide it out of view */
+#sidebar.collapsed {
+  transform: translateX(100%);
+}
+
+/* Toggle button (visually glued to sidebar's left edge) */
+#sidebar-toggle {
+  position: absolute;
+  top: 50%;
+  left: -20px;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 100px;
+  border: none;
+  background: #ccc;
+  cursor: pointer;
+  border-radius: 5px 0 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: background 0.3s ease;
+}
+
+#sidebar-toggle:hover {
+  background: #bbb;
+}
+
+#sidebar-toggle span {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+#sidebar.collapsed+#sidebar-toggle::after {
+  content: '⯇';
+}
+
+/* === KPIs & Logs === */
+
+.kpi-item {
+  font-size: 1rem;
+}
+
+#chart-panel {
+  flex: 0 0 300px;
+  padding: 10px;
+  margin-left: 10px;
+  background: #ffffff7e;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+.chart-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chart-block canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-width: 280px;
+  border: 1px solid #ccc;
+  background: #ffffff5d;
+}
+
+#chart-panel h4 {
+  margin-bottom: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.btn-log {
+  margin-top: 0.5rem;
+  padding: 0.4rem;
+  cursor: pointer;
+}
+
+.log-box {
+  display: none;
+  height: 100px;
+  overflow-y: auto;
+  background: #272822;
+  color: #f8f8f2;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+}
+
+/* === Pulse Animation === */
+@keyframes pulseBgBlue {
+  0% {
+    background-color: rgba(0, 0, 255, 0.2);
+  }
+
+  50% {
+    background-color: rgba(0, 0, 255, 0.6);
+  }
+
+  100% {
+    background-color: rgba(0, 0, 255, 0.2);
+  }
+}
+
+@keyframes pulseBgYellow {
+  0% {
+    background-color: rgba(255, 255, 0, 0.2);
+  }
+
+  50% {
+    background-color: rgba(255, 255, 0, 0.6);
+  }
+
+  100% {
+    background-color: rgba(255, 255, 0, 0.2);
+  }
+}
+
+.cell.pulse-blue {
+  animation: pulseBgBlue 400ms ease;
+}
+
+.cell.pulse-yellow {
+  animation: pulseBgYellow 400ms ease;
+}
+
+/* === Tooltip (Bin-Füllung) === */
+.tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  background: rgba(0, 0, 0, 0.85);
+  padding: 6px;
+  gap: 4px;
+  border-radius: 4px;
+  margin-top: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cell:hover .tooltip {
+  opacity: 1;
+}
+
+
+.tooltip .bin.filled.wrong {
+  background-color: rgba(255, 0, 0, 0.6);
+  color: white;
+  font-weight: bold;
+  border: 1px solid #a00;
+}
+.bin.reserved {
+  border: 2px dashed orange;
+}
+
+
+.tooltip .bin {
+  width: 40px;
+  height: 24px;
+  text-align: center;
+  line-height: 24px;
+  font-size: 0.75em;
+  border-radius: 3px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tooltip .bin.filled {
+  background: white;
+  color: black;
+  border: 1px solid #ccc;
+}
+
+.tooltip .bin.empty {
+  background: green;
+  color: transparent;
+  border: 1px solid #0a0;
+}
+
+.cell-label {
+  position: relative;
+  z-index: 1;
+  font-size: 0.7em;
+  text-align: center;
+  line-height: 1.2;
+  pointer-events: none;
+}
+.stress-overlay {
+  position: absolute;
+  width: 100%;
+  height: 20%; /* 3 rows = 3/10 = 30% if 10 grid rows total */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  font-size: 1.2rem;
+  color: black;
+  background: rgba(255, 255, 255, 0.95); /* Optional */
+  border: 3px solid #000;
+  box-sizing: border-box;
+  font-weight: bold;
+  text-align: center;
+  pointer-events: none;
+}
+#stress-bar-wrapper {
+  display: none;
+  position: relative;
+  width: 50%;
+  margin: 0.5rem auto 0 auto;
+  pointer-events: none;
+  z-index: 1000;
+  flex-direction: column;
+  align-items: center;
+}
+
+body.stress-active #stress-bar-wrapper {
+  display: flex;
+}
+
+#stress-test-heading {
+  text-align: center;
+  color: black;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 4px;
+  width: 100%;
+}
+
+
+.stress-seconds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font-size: 0.8rem;
+  color: white;
+  font-weight: bold;
+  z-index: 2; /* now above the bar */
+  text-shadow: 0 0 4px black;
+  text-align: center;
+  line-height: 6px; /* match bar height */
+  pointer-events: none;
+}
+
+body.stress-active .cell.pulse-blue,
+body.stress-active .cell.pulse-yellow {
+  animation: none !important;
+}
+/* Countdown container (frame) */
+#countdown-bar-container {
+  width: 90%;
+  height: 16px; /* taller for visibility */
+  background: #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* The green fill bar */
+#countdown-bar {
+  height: 100%;
+  width: 100%; /* dynamic width changes */
+  background: limegreen;
+  position: relative;
+  transition: width 0.1s linear;
+}
+
+/* The seconds shown centered INSIDE the bar */
+.stress-seconds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font-size: 0.85rem;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  line-height: 16px; /* match height */
+  z-index: 2;
+  text-shadow: 0 0 4px black;
+  pointer-events: none;
+  display: none;
+}
+
+body.stress-active .stress-seconds {
+  display: block;
+}

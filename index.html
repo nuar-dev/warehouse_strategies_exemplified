@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Pilz Lager Simulation (vereinfach)</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="icon" href="favicon.png" type="image/png" />
+</head>
+
+<body>
+  <h2 class="title">
+    <strong>Lagerstrategien (vereinfachte Darstellung - Kommissionierung )</strong>
+  </h2>
+
+  <div id="main">
+    <!-- Controls Panel -->
+    <div id="controls" class="collapsible-panel">
+      <button id="btn-start" class="button is-primary is-fullwidth">Animation starten</button>
+      <button id="btn-stop" class="button is-danger is-fullwidth">Animation stoppen</button>
+      <button id="btn-stresstest" class="button is-warning is-fullwidth">Stresstest starten</button>
+
+      <label for="tick-speed" class="label">Animationsgeschwindigkeit:</label>
+      <input type="range" id="tick-speed" min="2" max="1000" value="500" class="slider is-fullwidth" />
+      <span id="tick-display">100 ms</span>
+
+      <!-- Worker + Picker Controls for each zone -->
+      <div class="zone-control">
+        <h4>Festplatz</h4>
+        <label for="cnt-fixed">Anzahl Worker: <span id="cnt-fixed-label">1</span></label>
+        <input type="range" id="cnt-fixed" min="1" max="10" value="1" />
+        <label for="cnt-picker-fixed">Anzahl Picker: <span id="cnt-picker-fixed-label">1</span></label>
+        <input type="range" id="cnt-picker-fixed" min="1" max="10" value="1" />
+      </div>
+      <div class="zone-control">
+        <h4>Chaotisch</h4>
+        <label for="cnt-chaos">Anzahl Worker: <span id="cnt-chaos-label">1</span></label>
+        <input type="range" id="cnt-chaos" min="1" max="10" value="1" />
+        <label for="cnt-picker-chaos">Anzahl Picker: <span id="cnt-picker-chaos-label">1</span></label>
+        <input type="range" id="cnt-picker-chaos" min="1" max="10" value="1" />
+      </div>
+      <div class="zone-control">
+        <h4>Hybrid</h4>
+        <label for="cnt-hybrid">Anzahl Worker: <span id="cnt-hybrid-label">1</span></label>
+        <input type="range" id="cnt-hybrid" min="1" max="10" value="1" />
+        <label for="cnt-picker-hybrid">Anzahl Picker: <span id="cnt-picker-hybrid-label">1</span></label>
+        <input type="range" id="cnt-picker-hybrid" min="1" max="10" value="1" />
+      </div>
+
+      <div class="zone-control">
+        <h4>Visualisierung</h4>
+        <label><input type="checkbox" id="vis-workers" checked /> Workers sichtbar</label>
+        <label><input type="checkbox" id="vis-pickers" checked /> Picker sichtbar</label>
+        <label><input type="checkbox" id="vis-surveyor" checked /> Surveyor sichtbar</label>
+      </div>
+    </div>
+
+    <!-- Grid Panel -->
+    <div id="grid-container">
+      <div id="grid-layout">
+        <div id="grid-wrapper">
+          <div id="grid"></div>
+          <div id="workers"></div>
+          <div id="pickers"></div>
+          <div id="surveyors"></div>
+          <div id="labels"></div>
+        </div>
+
+        <div id="chart-panel">
+          <h6
+            style="text-align: center; font-family: 'Courier New'; font-size: 1rem; letter-spacing: 2px; color: #4a148c; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); font-weight: 800;">
+            <i class="fas fa-warehouse"></i> LAGERAUSLASTUNG
+          </h6>
+          <div class="chart-block">
+            <h5><strong>Festplatz Lager</strong></h5><canvas id="chart-fixed" width="280" height="220"></canvas>
+          </div>
+          <div class="chart-block">
+            <h5><strong>Chaotisches Lager</strong></h5><canvas id="chart-chaos" width="280" height="220"></canvas>
+          </div>
+          <div class="chart-block">
+            <h5><strong>Hybrides Zonenlager</strong></h5><canvas id="chart-hybrid" width="280" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ✅ Stress Bar Placement HERE (outside grid-layout but inside grid-container) -->
+      <div id="stress-bar-wrapper">
+        <div id="stress-test-heading">Stresstest: ...</div>
+        <div id="countdown-bar-container">
+          <div id="countdown-bar">
+            <div id="stress-bar-seconds" class="stress-seconds"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar-wrapper">
+    <div id="sidebar" class="collapsible-panel">
+      <!-- FESTPLATZ KPIs -->
+      <div class="kpi-block collapsible">
+        <h3 onclick="toggleBlock(this)">Festplatz ⯆</h3>
+        <div class="kpi-content">
+          <div class="kpi-item"><i class="fas fa-warehouse"></i> Lagerauslastung: <span id="load-fixed">0/160</span>
+          </div>
+          <div class="kpi-item"><i class="fas fa-clock"></i> Ø Pickzeit: <span id="avg-picktime-fixed">0</span> Ticks
+          </div>
+          <div class="kpi-item"><i class="fas fa-exclamation-triangle"></i> Schattenbestände: <span
+              id="shadow-fixed">0</span></div>
+          <div class="kpi-item"><i class="fas fa-eye"></i> Erkannte Schattenbestände: <span
+              id="survey-shadow-fixed">0</span></div>
+          <div class="kpi-item"><i class="fas fa-bug"></i> Fehlerhafte Lieferungen: <span
+              id="shadow-mistakes-fixed">0</span></div>
+          <div class="kpi-item"><i class="fas fa-fingerprint"></i> Zugriffe gesamt: <span
+              id="access-count-fixed">0</span></div>
+          <div class="kpi-item"><i class="fas fa-tint"></i> Überlauf: <span id="overflow-fixed">0</span></div>
+          <div class="kpi-item"><i class="fas fa-hand-paper"></i> Picks: <span id="pick-fixed">0</span></div>
+          <div class="kpi-item"><i class="fas fa-box"></i> Puts: <span id="put-fixed">0</span></div>
+          <button class="btn-log" data-zone="fixed">Logs anzeigen</button>
+          <pre id="log-fixed" class="log-box"></pre>
+        </div>
+      </div>
+      <!-- CHAOTISCH KPIs -->
+      <div class="kpi-block collapsible">
+        <h3 onclick="toggleBlock(this)">Chaotisch ⯆</h3>
+        <div class="kpi-content">
+          <div class="kpi-item">
+            <i class="fas fa-warehouse"></i> Lagerauslastung:
+            <span id="load-chaos">0/160</span>
+          </div>
+          <div class="kpi-item"><i class="fas fa-clock"></i> Ø Pickzeit: <span id="avg-picktime-chaos">0</span>
+            Ticks
+          </div>
+          <div class="kpi-item"><i class="fas fa-exclamation-triangle"></i> Schattenbestände: <span
+              id="shadow-chaos">0</span></div>
+          <div class="kpi-item"><i class="fas fa-eye"></i> Erkannte Schattenbestände: <span
+              id="survey-shadow-chaos">0</span></div>
+          <div class="kpi-item"><i class="fas fa-bug"></i> Fehlerhafte Lieferungen: <span
+              id="shadow-mistakes-chaos">0</span></div>
+          <div class="kpi-item"><i class="fas fa-fingerprint"></i> Zugriffe gesamt: <span
+              id="access-count-chaos">0</span></div>
+          <div class="kpi-item"><i class="fas fa-tint"></i> Überlauf: <span id="overflow-chaos">0</span></div>
+          <div class="kpi-item"><i class="fas fa-hand-paper"></i> Picks: <span id="pick-chaos">0</span></div>
+          <div class="kpi-item"><i class="fas fa-box"></i> Puts: <span id="put-chaos">0</span></div>
+          <button class="btn-log" data-zone="chaos">Logs anzeigen</button>
+          <pre id="log-chaos" class="log-box"></pre>
+        </div>
+      </div>
+
+      <!-- HYBRID KPIs -->
+      <div class="kpi-block collapsible">
+        <h3 onclick="toggleBlock(this)">Hybrid ⯆</h3>
+        <div class="kpi-content">
+          <div class="kpi-item">
+            <i class="fas fa-warehouse"></i> Lagerauslastung:
+            <span id="load-hybrid">0/160</span>
+          </div>
+          <div class="kpi-item"><i class="fas fa-clock"></i> Ø Pickzeit: <span id="avg-picktime-hybrid">0</span>
+            Ticks
+          </div>
+          <div class="kpi-item"><i class="fas fa-exclamation-triangle"></i> Schattenbestände: <span
+              id="shadow-hybrid">0</span></div>
+          <div class="kpi-item"><i class="fas fa-eye"></i> Erkannte Schattenbestände: <span
+              id="survey-shadow-hybrid">0</span></div>
+          <div class="kpi-item"><i class="fas fa-bug"></i> Fehlerhafte Lieferungen: <span
+              id="shadow-mistakes-hybrid">0</span></div>
+          <div class="kpi-item"><i class="fas fa-fingerprint"></i> Zugriffe gesamt: <span
+              id="access-count-hybrid">0</span></div>
+          <div class="kpi-item"><i class="fas fa-tint"></i> Überlauf: <span id="overflow-hybrid">0</span></div>
+          <div class="kpi-item"><i class="fas fa-hand-paper"></i> Picks: <span id="pick-hybrid">0</span></div>
+          <div class="kpi-item"><i class="fas fa-box"></i> Puts: <span id="put-hybrid">0</span></div>
+          <button class="btn-log" data-zone="hybrid">Logs anzeigen</button>
+          <pre id="log-hybrid" class="log-box"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <script src="script.js" defer></script>
+  <script src="stressTest.js"></script>
+</body>
+
+</html>
