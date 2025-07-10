@@ -3,8 +3,6 @@
 A simulation of warehouse storage strategies — **Fixed Slotting**, **Chaotic Storage**, and **Hybrid Models** — implemented in a visual, browser-based environment.  
 Built to explore optimization, overflow behavior, and real-time KPIs.
 
-![screenshot](docs/demo.gif) <!-- Replace with actual GIF path -->
-
 ---
 
 ## 📦 Features
