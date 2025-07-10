@@ -28,9 +28,3 @@ Built to explore optimization, overflow behavior, and real-time KPIs.
 ## 🖼️ Demo
 
 ![Warehouse Simulation Demo](docs/demo.gif)
-
-You can create the GIF using [Peek](https://github.com/phw/peek) or `ffmpeg` on Linux:
-```bash
-peek                 # GUI to record screen
-# OR
-ffmpeg -video_size 1280x720 -framerate 30 -f x11grab -i :0.0 demo.mp4
